@@ -199,7 +199,6 @@ spec:
             claimName: pvc-centos-pv-0a00
         # - dataVolume:
         #     name: es-master00-data
-          name: data
         - cloudInitNoCloud:
             userData: |-
               #cloud-config
