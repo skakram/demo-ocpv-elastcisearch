@@ -194,7 +194,7 @@ spec:
         - dataVolume:
             name: es-master00
           name: rootdisk
-        - name: pvc-centos-pv-0a00
+        - name: data
           persistentVolumeClaim:
             claimName: es-master00-data
         # - dataVolume:
