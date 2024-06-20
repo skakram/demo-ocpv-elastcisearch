@@ -8,7 +8,7 @@ spec:
   persistentVolumeClaimName: es-master00
   storageClassName: sc-gold-replicated
   ---
-  apiVersion: hspc.hitachi.com/v1
+apiVersion: hspc.hitachi.com/v1
 kind: Replication
 metadata:
   name: es-master00-data
