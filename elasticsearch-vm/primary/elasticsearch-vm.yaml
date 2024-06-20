@@ -196,7 +196,7 @@ spec:
           name: rootdisk
         - name: pvc-centos-pv-0a00
           persistentVolumeClaim:
-            claimName: pvc-centos-pv-0a00
+            claimName: es-master00-data
         # - dataVolume:
         #     name: es-master00-data
         - cloudInitNoCloud:
