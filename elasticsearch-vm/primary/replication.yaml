@@ -4,7 +4,7 @@ metadata:
   name: es-master00
   namespace: prod-apps
 spec:
-  desiredPairState: pair
+  desiredPairState: split
   persistentVolumeClaimName: es-master00
   storageClassName: sc-gold-replicated
 ---
@@ -14,6 +14,6 @@ metadata:
   name: es-master00-data
   namespace: prod-apps
 spec:
-  desiredPairState: pair
+  desiredPairState: split
   persistentVolumeClaimName: es-master00-data
   storageClassName: sc-gold-replicated
