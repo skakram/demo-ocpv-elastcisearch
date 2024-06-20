@@ -123,7 +123,7 @@ spec:
           resources:
               requests:
                   # Modify this to match requirements for your environment
-                  storage: 15Gi
+                  storage: 40Gi
   # - metadata:
   #     name: es-master00-data
   #     namespace: prod-apps
