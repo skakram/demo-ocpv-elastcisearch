@@ -123,7 +123,7 @@ spec:
           resources:
               requests:
                   # Modify this to match requirements for your environment
-                  storage: 40Gi
+                  storage: 15Gi
   # - metadata:
   #     name: es-master00-data
   #     namespace: prod-apps
@@ -150,7 +150,7 @@ spec:
     spec:
       domain:
         cpu:
-          cores: 2
+          cores: 4
           sockets: 1
           threads: 2
         devices:
@@ -185,7 +185,7 @@ spec:
         resources:
           requests:
             # Increase if the amount of memory used by elasticsearch is increased
-            memory: 2Gi
+            memory: 8Gi
       networks:
         - name: default
           pod: {}
