@@ -4,6 +4,8 @@ kind: ConfigMap
 metadata:
   name: es-master00-conf
   namespace: prod-apps
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
 data:
   # Modify the Xms and Xmx values as appropriate for your application
   # Modify the network.publish_host to match the service and namespace in your environment
@@ -46,6 +48,8 @@ kind: Service
 metadata:
   name: es-master00
   namespace: prod-apps
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
 spec:
   selector:
     node: es-master00
@@ -72,6 +76,8 @@ apiVersion: route.openshift.io/v1
 metadata:
   name: es-master00
   namespace: prod-apps
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
 spec:
   # Modify this to match your environment
   host: es-master00.apps.ocp-emea-clu01.coe.net
@@ -90,6 +96,8 @@ kind: PersistentVolumeClaim
 metadata:
   name: es-master00-data
   namespace: prod-apps
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
 spec:
   accessModes:
     - ReadWriteMany
@@ -104,6 +112,8 @@ kind: VirtualMachine
 metadata:
   name: es-master00
   namespace: prod-apps
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
   labels:
     app.kubernetes.io/part-of: elasticsearch
 spec:
