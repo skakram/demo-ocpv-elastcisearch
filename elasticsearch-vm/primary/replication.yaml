@@ -3,6 +3,8 @@ kind: Replication
 metadata:
   name: es-master00
   namespace: prod-apps
+  annotations:
+    argocd.argoproj.io/sync-wave: "6"
 spec:
   desiredPairState: pair
   persistentVolumeClaimName: es-master00
@@ -13,6 +15,8 @@ kind: Replication
 metadata:
   name: es-master00-data
   namespace: prod-apps
+  annotations:
+    argocd.argoproj.io/sync-wave: "7"
 spec:
   desiredPairState: pair
   persistentVolumeClaimName: es-master00-data
