@@ -222,7 +222,7 @@ spec:
               password: redhat
               chpasswd: { expire: False }
               ssh_authorized_keys:
-               - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDQ0AJQlTvgiScYT+9bZUkBcnyg346jkag10isxaU5vy8TG9Jt+9jwQMOa21Quj0UPz5HxbXNBu2kRrU+2KUJEeCZU/hwKBuXRYWIND110yJCSQZKpQhiD/gmtY8B7pPnJSSrWf+e47X8XDRiuABPwbpK2vKdjx71abEGQTKHow2IXpzgF46k70YqKIowbvU0VCuCEQnCRSxmjg2A8mYQez0Z7cW9J9LUbI7JuOoE9b9U33oDauUcj3QhQzttllSgV0ma58Qha+kjR1+71RrVCrI+5+PoPbnlh5/J6NjxEVhu9rndkaprY7QhbAOfCqgr4XM35hxtyFtL66YNi4vREom9n/TZXQI0w6ojRlzd1d4na5U1IiJw+AS3tAMXnpgBIVR1mvmyd8OF2VHS2iOOk9ApCs/Vuq5k200cE2jeptuppNLaSD21TjpK6Bz60kXPrz+cjQwvU8rsE8P95M24kDgVztrY3yKEGy+1lBRoMaWpbImh3B5LQL3vKT0bkBxWE= awels@awels.wels.home
+               - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDMV6pubVUse5nezmBwNVKbUD+zvm/vTpaNiqQkxO5sQVUPy9mAzoTPZNOzI11dkr7ZF33Q3/8gHR8I2VTBKSpJhl5j4OwODMQvehPgh56SPL4qKvzbtEXkBgW0/HwQIioE3ShZq2KqG+PllFR7iQUujP3fKouNyjShExIybvR7B2xpVPPSvAOyXdaJFFNROaZA3WtdDqgqUDAzFAgha+alMPDdn9n5KJkQrFv1xIi3j7RawKCraFZPZQyuBwiqs2RHYJYI01lLuEilEc/RaFKXIce0W51Ez9jz3rf2JKa0/uP3jWaeYSZ69ZYrUezWHpQmXZbBsGywDnb6tdz9vtn79Juo5BeTS10tI/Mj3UJlBvPJaKIphq8eRVB6xH/HLV+YSSNk58ISpJBr3alSlxpJ1mRCIChPTiFIzHxF8QHK3XNcPOBr3ntrPGWL9+JViHvo79U24lyV3E7PpqfLBemrQOc5WwAut0QlRNDY66LKYEV3iHi2bbKvMnuJ2MTToD8= root@ocp-svc
           name: cloudinitdisk
         - configMap:
             name: es-master00-conf
