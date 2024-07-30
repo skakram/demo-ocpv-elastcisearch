@@ -147,7 +147,7 @@ spec:
   #             requests:
   #                 # Modify this to match requirements for your environment
   #                 storage: 40Gi
-  running: false
+  running: true
   template:
     metadata:
       annotations:
