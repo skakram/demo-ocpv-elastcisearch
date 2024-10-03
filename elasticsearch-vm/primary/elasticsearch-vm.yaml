@@ -130,6 +130,7 @@ spec:
           name: centos-stream9
           namespace: openshift-virtualization-os-images
       storage:
+        storageClassName: sc-gold-replicated
           resources:
               requests:
                   # Modify this to match requirements for your environment
