@@ -93,37 +93,7 @@
 #   labels:
 #     app.kubernetes.io/part-of: elasticsearch
 # spec:
-# #   dataVolumeTemplates:
-# #   - metadata:
-# #       name: es-master00
-# #       namespace: prod-apps
-# #     spec:
-# #       preallocation: false
-# # #      volumeName: es-master00
-# #       sourceRef:
-# #           kind: DataSource
-# #           # Modify this to match available datasource in your environment
-# #           name: centos-stream9
-# #           namespace: openshift-virtualization-os-images
-# #       storage:
-# #           resources:
-# #               requests:
-# #                   # Modify this to match requirements for your environment
-# #                   storage: 40Gi
-#   # - metadata:
-#   #     name: es-master00-data
-#   #     namespace: prod-apps
-#   #   spec:
-#   #     preallocation: false
-#   #     source:
-#   #         blank: {}
-#   #     storage:
-#   #         volumeName: es-master00-data
-#   #         resources:
-#   #             requests:
-#   #                 # Modify this to match requirements for your environment
-#   #                 storage: 40Gi
-#   running: true
+#   running: false
 #   template:
 #     metadata:
 #       annotations:
