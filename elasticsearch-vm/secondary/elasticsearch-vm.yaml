@@ -95,7 +95,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "8"
 spec:
-  running: true
+  running: false
   template:
     metadata:
       annotations:
