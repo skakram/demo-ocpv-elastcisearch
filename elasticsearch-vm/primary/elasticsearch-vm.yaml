@@ -1,236 +1,236 @@
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: es-master00-conf
-  namespace: prod-apps
-  annotations:
-    argocd.argoproj.io/sync-wave: "0"
-data:
-  # Modify the Xms and Xmx values as appropriate for your application
-  # Modify the network.publish_host to match the service and namespace in your environment
-  # If more than one VM, update the cluster.initial_master_nodes to include the other VMs
-  # To enable secure communication enabled xpack.security fields
-  elasticsearch.conf: |-
-    cluster.name: dc1-openshift-cluster
-    node.name: es-master00
-    node.roles: [ master, data ]
-    network.host: _site_
-    network.publish_host: es-master00.prod-apps.svc.cluster.local
-    discovery.seed_hosts: ["es-master00"]
-    cluster.initial_master_nodes: ["es-master00"]
-    path.data: /srv/elasticsearch
-    path.logs: /var/log/elasticsearch
-    xpack.security.enabled: false
-    xpack.security.transport.ssl.enabled: false
-    xpack.security.http.ssl.enabled: false
-  jvm.options: |-
-    -Xms1024m
-    -Xmx1024m
-    -XX:+DisableExplicitGC
-    -XX:+UseParallelGC
-    -XX:+AlwaysPreTouch
-    -server
-    -Djava.awt.headless=true
-    -Dfile.encoding=UTF-8
-    -Djna.nosys=true
-    -Djdk.io.permissionsUseCanonicalPath=true
-    -Dio.netty.noUnsafe=true
-    -Dio.netty.noKeySetOptimization=true
-    -Dlog4j.shutdownHookEnabled=false
-    -Dlog4j2.disable.jmx=true
-    -Dlog4j.skipJansi=true
-    -XX:+HeapDumpOnOutOfMemoryError
-immutable: false
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: es-master00
-  namespace: prod-apps
-  annotations:
-    argocd.argoproj.io/sync-wave: "1"
-spec:
-  selector:
-    node: es-master00
-  ports:
-    - name: elasticsearch
-      protocol: TCP
-      port: 9200
-      targetPort: 9200
-    - name: elasticsearch-discovery
-      protocol: TCP
-      port: 9300
-      targetPort: 9300
-    - name: ssh
-      protocol: TCP
-      port: 22
-      targetPort: 22
-    - name: cockpit
-      protocol: TCP
-      port: 9090
-      targetPort: 9090
----
-kind: Route
-apiVersion: route.openshift.io/v1
-metadata:
-  name: es-master00
-  namespace: prod-apps
-  annotations:
-    argocd.argoproj.io/sync-wave: "2"
-spec:
-  # Modify this to match your environment
-  host: es-master00.apps.ocp-emea-clu01.coe.net
-  to:
-    kind: Service
-    name: es-master00
-  port:
-    targetPort: cockpit
-  tls:
-    termination: passthrough
-    insecureEdgeTerminationPolicy: Redirect
-  wildcardPolicy: None
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: es-master00-data
-  namespace: prod-apps
-  annotations:
-    argocd.argoproj.io/sync-wave: "3"
-spec:
-  accessModes:
-    - ReadWriteMany
-  resources:
-    requests:
-      storage: 10Gi
-  storageClassName: sc-gold-replicated
-  volumeMode: Block
----
-apiVersion: kubevirt.io/v1
-kind: VirtualMachine
-metadata:
-  name: es-master00
-  namespace: prod-apps
-  annotations:
-    argocd.argoproj.io/sync-wave: "4"
-  labels:
-    app.kubernetes.io/part-of: elasticsearch
-spec:
-  dataVolumeTemplates:
-  - metadata:
-      name: es-master00
-      namespace: prod-apps
-    spec:
-      preallocation: false
-#      volumeName: es-master00
-      sourceRef:
-          kind: DataSource
-          # Modify this to match available datasource in your environment
-          name: centos-stream9
-          namespace: openshift-virtualization-os-images
-      storage:
-          resources:
-              requests:
-                  # Modify this to match requirements for your environment
-                  storage: 30Gi
-  # - metadata:
-  #     name: es-master00-data
-  #     namespace: prod-apps
-  #   spec:
-  #     preallocation: false
-  #     source:
-  #         blank: {}
-  #     storage:
-  #         volumeName: es-master00-data
-  #         resources:
-  #             requests:
-  #                 # Modify this to match requirements for your environment
-  #                 storage: 40Gi
-  running: true
-  template:
-    metadata:
-      annotations:
-        vm.kubevirt.io/os: rhel9
-        vm.kubevirt.io/workload: server
-      labels:
-        app: elasticsearch
-        node: es-master00
-        elasticsearch: master
-    spec:
-      domain:
-        cpu:
-          cores: 4
-          sockets: 1
-          threads: 2
-        devices:
-          disks:
-            - bootOrder: 1
-              disk:
-                bus: virtio
-              name: rootdisk
-            - disk:
-                bus: virtio
-              name: cloudinitdisk
-            - disk:
-                bus: virtio
-              name: elasticsearch-yaml
-              serial: 00yaml
-            - disk:
-                bus: virtio
-              name: install-scripts
-              serial: 0000sh
-            - disk:
-                bus: virtio
-              name: letsencrypt
-              serial: 00cert
-            - disk:
-                bus: virtio
-              name: data
-              serial: datadisk
-          interfaces:
-            - masquerade: {}
-              model: virtio
-              name: default
-        resources:
-          requests:
-            # Increase if the amount of memory used by elasticsearch is increased
-            memory: 8Gi
-      networks:
-        - name: default
-          pod: {}
-      terminationGracePeriodSeconds: 180
-      volumes:
-        - dataVolume:
-            name: es-master00
-          name: rootdisk
-        - name: data
-          persistentVolumeClaim:
-            claimName: es-master00-data
-        # - dataVolume:
-        #     name: es-master00-data
-        - cloudInitNoCloud:
-            userData: |-
-              #cloud-config
-              hostname: es-master00
-              runcmd:
-                - mount /dev/disk/by-id/virtio-0000sh /mnt/
-                - bash /mnt/system.sh
-                - bash /mnt/elasticsearch.sh
-                - umount /mnt
-              user: elasticsearch
-              password: redhat
-              chpasswd: { expire: False }
-              ssh_authorized_keys:
-               - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDMV6pubVUse5nezmBwNVKbUD+zvm/vTpaNiqQkxO5sQVUPy9mAzoTPZNOzI11dkr7ZF33Q3/8gHR8I2VTBKSpJhl5j4OwODMQvehPgh56SPL4qKvzbtEXkBgW0/HwQIioE3ShZq2KqG+PllFR7iQUujP3fKouNyjShExIybvR7B2xpVPPSvAOyXdaJFFNROaZA3WtdDqgqUDAzFAgha+alMPDdn9n5KJkQrFv1xIi3j7RawKCraFZPZQyuBwiqs2RHYJYI01lLuEilEc/RaFKXIce0W51Ez9jz3rf2JKa0/uP3jWaeYSZ69ZYrUezWHpQmXZbBsGywDnb6tdz9vtn79Juo5BeTS10tI/Mj3UJlBvPJaKIphq8eRVB6xH/HLV+YSSNk58ISpJBr3alSlxpJ1mRCIChPTiFIzHxF8QHK3XNcPOBr3ntrPGWL9+JViHvo79U24lyV3E7PpqfLBemrQOc5WwAut0QlRNDY66LKYEV3iHi2bbKvMnuJ2MTToD8= root@ocp-svc
-          name: cloudinitdisk
-        - configMap:
-            name: es-master00-conf
-          name: elasticsearch-yaml
-        - configMap:
-            name: install-scripts
-          name: install-scripts
-        - secret:
-            secretName: letsencrypt
-          name: letsencrypt
----
+# ---
+# apiVersion: v1
+# kind: ConfigMap
+# metadata:
+#   name: es-master00-conf
+#   namespace: prod-apps
+#   annotations:
+#     argocd.argoproj.io/sync-wave: "0"
+# data:
+#   # Modify the Xms and Xmx values as appropriate for your application
+#   # Modify the network.publish_host to match the service and namespace in your environment
+#   # If more than one VM, update the cluster.initial_master_nodes to include the other VMs
+#   # To enable secure communication enabled xpack.security fields
+#   elasticsearch.conf: |-
+#     cluster.name: dc1-openshift-cluster
+#     node.name: es-master00
+#     node.roles: [ master, data ]
+#     network.host: _site_
+#     network.publish_host: es-master00.prod-apps.svc.cluster.local
+#     discovery.seed_hosts: ["es-master00"]
+#     cluster.initial_master_nodes: ["es-master00"]
+#     path.data: /srv/elasticsearch
+#     path.logs: /var/log/elasticsearch
+#     xpack.security.enabled: false
+#     xpack.security.transport.ssl.enabled: false
+#     xpack.security.http.ssl.enabled: false
+#   jvm.options: |-
+#     -Xms1024m
+#     -Xmx1024m
+#     -XX:+DisableExplicitGC
+#     -XX:+UseParallelGC
+#     -XX:+AlwaysPreTouch
+#     -server
+#     -Djava.awt.headless=true
+#     -Dfile.encoding=UTF-8
+#     -Djna.nosys=true
+#     -Djdk.io.permissionsUseCanonicalPath=true
+#     -Dio.netty.noUnsafe=true
+#     -Dio.netty.noKeySetOptimization=true
+#     -Dlog4j.shutdownHookEnabled=false
+#     -Dlog4j2.disable.jmx=true
+#     -Dlog4j.skipJansi=true
+#     -XX:+HeapDumpOnOutOfMemoryError
+# immutable: false
+# ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: es-master00
+#   namespace: prod-apps
+#   annotations:
+#     argocd.argoproj.io/sync-wave: "1"
+# spec:
+#   selector:
+#     node: es-master00
+#   ports:
+#     - name: elasticsearch
+#       protocol: TCP
+#       port: 9200
+#       targetPort: 9200
+#     - name: elasticsearch-discovery
+#       protocol: TCP
+#       port: 9300
+#       targetPort: 9300
+#     - name: ssh
+#       protocol: TCP
+#       port: 22
+#       targetPort: 22
+#     - name: cockpit
+#       protocol: TCP
+#       port: 9090
+#       targetPort: 9090
+# ---
+# kind: Route
+# apiVersion: route.openshift.io/v1
+# metadata:
+#   name: es-master00
+#   namespace: prod-apps
+#   annotations:
+#     argocd.argoproj.io/sync-wave: "2"
+# spec:
+#   # Modify this to match your environment
+#   host: es-master00.apps.ocp-emea-clu01.coe.net
+#   to:
+#     kind: Service
+#     name: es-master00
+#   port:
+#     targetPort: cockpit
+#   tls:
+#     termination: passthrough
+#     insecureEdgeTerminationPolicy: Redirect
+#   wildcardPolicy: None
+# ---
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: es-master00-data
+#   namespace: prod-apps
+#   annotations:
+#     argocd.argoproj.io/sync-wave: "3"
+# spec:
+#   accessModes:
+#     - ReadWriteMany
+#   resources:
+#     requests:
+#       storage: 10Gi
+#   storageClassName: sc-gold-replicated
+#   volumeMode: Block
+# ---
+# apiVersion: kubevirt.io/v1
+# kind: VirtualMachine
+# metadata:
+#   name: es-master00
+#   namespace: prod-apps
+#   annotations:
+#     argocd.argoproj.io/sync-wave: "4"
+#   labels:
+#     app.kubernetes.io/part-of: elasticsearch
+# spec:
+#   dataVolumeTemplates:
+#   - metadata:
+#       name: es-master00
+#       namespace: prod-apps
+#     spec:
+#       preallocation: false
+# #      volumeName: es-master00
+#       sourceRef:
+#           kind: DataSource
+#           # Modify this to match available datasource in your environment
+#           name: centos-stream9
+#           namespace: openshift-virtualization-os-images
+#       storage:
+#           resources:
+#               requests:
+#                   # Modify this to match requirements for your environment
+#                   storage: 30Gi
+#   # - metadata:
+#   #     name: es-master00-data
+#   #     namespace: prod-apps
+#   #   spec:
+#   #     preallocation: false
+#   #     source:
+#   #         blank: {}
+#   #     storage:
+#   #         volumeName: es-master00-data
+#   #         resources:
+#   #             requests:
+#   #                 # Modify this to match requirements for your environment
+#   #                 storage: 40Gi
+#   running: true
+#   template:
+#     metadata:
+#       annotations:
+#         vm.kubevirt.io/os: rhel9
+#         vm.kubevirt.io/workload: server
+#       labels:
+#         app: elasticsearch
+#         node: es-master00
+#         elasticsearch: master
+#     spec:
+#       domain:
+#         cpu:
+#           cores: 4
+#           sockets: 1
+#           threads: 2
+#         devices:
+#           disks:
+#             - bootOrder: 1
+#               disk:
+#                 bus: virtio
+#               name: rootdisk
+#             - disk:
+#                 bus: virtio
+#               name: cloudinitdisk
+#             - disk:
+#                 bus: virtio
+#               name: elasticsearch-yaml
+#               serial: 00yaml
+#             - disk:
+#                 bus: virtio
+#               name: install-scripts
+#               serial: 0000sh
+#             - disk:
+#                 bus: virtio
+#               name: letsencrypt
+#               serial: 00cert
+#             - disk:
+#                 bus: virtio
+#               name: data
+#               serial: datadisk
+#           interfaces:
+#             - masquerade: {}
+#               model: virtio
+#               name: default
+#         resources:
+#           requests:
+#             # Increase if the amount of memory used by elasticsearch is increased
+#             memory: 8Gi
+#       networks:
+#         - name: default
+#           pod: {}
+#       terminationGracePeriodSeconds: 180
+#       volumes:
+#         - dataVolume:
+#             name: es-master00
+#           name: rootdisk
+#         - name: data
+#           persistentVolumeClaim:
+#             claimName: es-master00-data
+#         # - dataVolume:
+#         #     name: es-master00-data
+#         - cloudInitNoCloud:
+#             userData: |-
+#               #cloud-config
+#               hostname: es-master00
+#               runcmd:
+#                 - mount /dev/disk/by-id/virtio-0000sh /mnt/
+#                 - bash /mnt/system.sh
+#                 - bash /mnt/elasticsearch.sh
+#                 - umount /mnt
+#               user: elasticsearch
+#               password: redhat
+#               chpasswd: { expire: False }
+#               ssh_authorized_keys:
+#                - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDMV6pubVUse5nezmBwNVKbUD+zvm/vTpaNiqQkxO5sQVUPy9mAzoTPZNOzI11dkr7ZF33Q3/8gHR8I2VTBKSpJhl5j4OwODMQvehPgh56SPL4qKvzbtEXkBgW0/HwQIioE3ShZq2KqG+PllFR7iQUujP3fKouNyjShExIybvR7B2xpVPPSvAOyXdaJFFNROaZA3WtdDqgqUDAzFAgha+alMPDdn9n5KJkQrFv1xIi3j7RawKCraFZPZQyuBwiqs2RHYJYI01lLuEilEc/RaFKXIce0W51Ez9jz3rf2JKa0/uP3jWaeYSZ69ZYrUezWHpQmXZbBsGywDnb6tdz9vtn79Juo5BeTS10tI/Mj3UJlBvPJaKIphq8eRVB6xH/HLV+YSSNk58ISpJBr3alSlxpJ1mRCIChPTiFIzHxF8QHK3XNcPOBr3ntrPGWL9+JViHvo79U24lyV3E7PpqfLBemrQOc5WwAut0QlRNDY66LKYEV3iHi2bbKvMnuJ2MTToD8= root@ocp-svc
+#           name: cloudinitdisk
+#         - configMap:
+#             name: es-master00-conf
+#           name: elasticsearch-yaml
+#         - configMap:
+#             name: install-scripts
+#           name: install-scripts
+#         - secret:
+#             secretName: letsencrypt
+#           name: letsencrypt
+# ---
