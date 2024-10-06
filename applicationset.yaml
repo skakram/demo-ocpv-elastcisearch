@@ -1,0 +1,38 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: elasticsearch-vm-demo
+  namespace: openshift-gitops
+spec:
+  generators:
+    - clusters:
+        selector:
+          matchLabels:
+            env: prd
+        values:
+          revision: prod
+    - clusters:
+        selector:
+          matchLabels:
+            env: standby
+        values:
+          revision: standby
+  template:
+    metadata:
+      name: '{{name}}'
+    spec:
+      destination:
+        name: '{{name}}'
+        namespace: prod-apps
+      project: default
+      source:
+        path: elasticsearch-vm/
+        repoURL: 'https://github.com/skakram/demo-ocpv-elasticsearch.git'
+        targetRevision: '{{values.revision}}'
+      syncPolicy:
+        automated:
+          allowEmpty: true
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=false
