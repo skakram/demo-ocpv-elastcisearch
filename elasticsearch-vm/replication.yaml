@@ -1,14 +1,14 @@
-# apiVersion: hspc.hitachi.com/v1
-# kind: Replication
-# metadata:
-#   name: es-master00
-#   namespace: prod-apps
-#   annotations:
-#     argocd.argoproj.io/sync-wave: "6"
-# spec:
-#   desiredPairState: pair
-#   persistentVolumeClaimName: es-master00
-#   storageClassName: sc-gold-replicated
+apiVersion: hspc.hitachi.com/v1
+kind: Replication
+metadata:
+  name: es-master00
+  namespace: prod-apps
+  annotations:
+    argocd.argoproj.io/sync-wave: "6"
+spec:
+  desiredPairState: pair
+  persistentVolumeClaimName: es-master00
+  storageClassName: sc-gold-replicated
 ---
 apiVersion: hspc.hitachi.com/v1
 kind: Replication
